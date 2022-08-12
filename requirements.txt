@@ -5,3 +5,4 @@ seaborn
 matplotlib
 sklearn
 scikit-learn-extra
+openpyxl
