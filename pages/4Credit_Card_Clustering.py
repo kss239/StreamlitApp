@@ -136,10 +136,10 @@ def tab_scatterplot(color):
 
     with col2:
         if x_axis == y_axis:
-            fig = sns.displot(x=data[x_axis], hue=data[color],kind="kde")
+            fig = sns.displot(x=data[x_axis], col=data[color],kind="kde")
             st.pyplot(fig)
         else:
-            fig = sns.displot(x=data[x_axis], y=data[y_axis], hue=data[color],kind="kde")
+            fig = sns.displot(x=data[x_axis], y=data[y_axis], col=data[color],kind="kde")
             st.pyplot(fig)
 
 tab1, tab2, tab3 = st.tabs(['K-Means','K-Medoids','Gaussian Mixture'])
