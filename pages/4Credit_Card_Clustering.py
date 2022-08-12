@@ -139,7 +139,7 @@ def tab_scatterplot(color):
             fig = sns.displot(x=data[x_axis], hue=data[color],kind="kde")
             st.pyplot(fig)
         else:
-            fig = sns.displot(x=data[x_axis], y=data[y_axis], hue=data[color],kind="kde")
+            fig = sns.jointplot(x=data[x_axis], y=data[y_axis], hue=data[color],kind="kde")
             st.pyplot(fig)
 
 tab1, tab2, tab3 = st.tabs(['K-Means','K-Medoids','Gaussian Mixture'])
