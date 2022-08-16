@@ -1,3 +1,4 @@
+from os import scandir
 import streamlit as st
 
 import pandas as pd
@@ -11,9 +12,6 @@ from sklearn.preprocessing import StandardScaler
 
 #importing clustering algorithms
 from sklearn.cluster import KMeans
-from sklearn.mixture import GaussianMixture
-
-from sklearn_extra.cluster import KMedoids
 
 from sklearn.metrics import silhouette_score
 
@@ -101,52 +99,59 @@ for key, value in sc.items():
         s_score = value
         n = key
 
+
 #Kmean
-kmeans = KMeans(n_clusters=n, max_iter= 1000, random_state=1)
-kmeans.fit(data_scaled)
+kmeans = KMeans(n_clusters=n, max_iter= 1000, random_state=1)#n = 3
+kmeans.fit(data)
+centroids = kmeans.cluster_centers_
 
-data_scaled_copy['Labels'] = kmeans.predict(data_scaled)
-data['Labels'] = kmeans.predict(data_scaled)
+data['Labels'] = kmeans.predict(data)
 
-#Kmedo
-kmedo = KMedoids(n_clusters = n, random_state=1)
-kmedo.fit(data_scaled)
+#Mapping to only 3
+colors = ['#DF2020', '#81DF20', '#2095DF']
+data['c'] = data['Labels'].map({0:colors[0], 1:colors[1], 2:colors[2]})
 
-data_scaled = np.ascontiguousarray(data_scaled)
-data_scaled_copy['kmedoLabels'] = kmedo.predict(data_scaled)
-data['kmedoLabels'] = kmedo.predict(data_scaled)
+from matplotlib.lines import Line2D
 
-#Gmm
-gmm = GaussianMixture(n_components = n)
-gmm.fit(data_scaled)
-
-data_scaled_copy['GmmLabels'] = gmm.predict(data_scaled)
-data['GmmLabels'] = gmm.predict(data_scaled)
-
-
-def tab_scatterplot(color):
+def tab_scatterplot():
     col1,col2= st.columns([1,2])
     with col1:# come back to this
         x_axis = st.selectbox(
         'X axis',
-        data.columns[:-3],key=f'x{color}')
+        data.columns[:-3],key='x'+'Labels')
         y_axis = st.selectbox(
         'Y axis',
-        data.columns[:-3],key=f'y{color}')
+        data.columns[:-3],key='y'+'Labels')
 
     with col2:
         if x_axis == y_axis:
-            fig = sns.displot(x=data[x_axis], hue=data[color],kind="kde")
-            st.pyplot(fig)
+            st.header('Choose different X Axis & Y Axis')
         else:
-            fig = sns.jointplot(x=data[x_axis], y=data[y_axis], hue=data[color],kind="kde")
+            fig, ax = plt.subplots(1, figsize=(8,8))
+            # plot data
+            plt.scatter(data[x_axis], data[y_axis], c=data.c, alpha = 0.6, s=10)
+            # plot centroids
+            cen_x = [i[data.columns.get_loc(x_axis)] for i in centroids] 
+            cen_y = [i[data.columns.get_loc(y_axis)] for i in centroids]
+            data['cen_x'] = data['Labels'].map({0:cen_x[0], 1:cen_x[1], 2:cen_x[2]})
+            data['cen_y'] = data['Labels'].map({0:cen_y[0], 1:cen_y[1], 2:cen_y[2]})
+            plt.scatter(cen_x, cen_y, marker='^', c=colors, s=70)
+            # plot lines
+            for idx, val in data.iterrows():
+                x = [val[x_axis], val.cen_x,]
+                y = [val[y_axis], val.cen_y]
+                plt.plot(x, y, c=val.c, alpha=0.2)
+            # legend
+            legend_elements = [Line2D([0], [0], marker='o', color='w', label='Cluster {}'.format(i+1), 
+                            markerfacecolor=mcolor, markersize=5) for i, mcolor in enumerate(colors)]
+            legend_elements.extend([Line2D([0], [0], marker='^', color='w', label='Centroid - C{}'.format(i+1), 
+                        markerfacecolor=mcolor, markersize=10) for i, mcolor in enumerate(colors)])
+            
+            plt.legend(handles=legend_elements, loc='upper right', ncol=2)
+
+            plt.xlabel(x_axis)
+            plt.ylabel(y_axis)
+
             st.pyplot(fig)
 
-tab1, tab2, tab3 = st.tabs(['K-Means','K-Medoids','Gaussian Mixture'])
-
-with tab1:
-    tab_scatterplot('Labels')
-with tab2:
-    tab_scatterplot('kmedoLabels')
-with tab3:
-    tab_scatterplot('GmmLabels')
+tab_scatterplot()
